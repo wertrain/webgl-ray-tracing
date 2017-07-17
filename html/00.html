@@ -4,26 +4,47 @@
     <meta charset="utf-8">
     <title>WebGL Ray Tracing - 00</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet">
   </head>
   <body>
+    <script id="common-vs" type="x-shader/x-vertex">
+        attribute vec3 position;
+        varying   vec2 vTexCoord;
+
+        void main() {
+            vTexCoord   = (position + 1.0).xy / 2.0;
+            gl_Position = vec4(position, 1.0);
+        }
+    </script>
+    <script id="common-fs" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform sampler2D texture;
+        varying vec2      vTexCoord;
+
+        void main() {
+            gl_FragColor = texture2D(texture, vTexCoord);
+        }
+    </script>
     <script id="vs" type="x-shader/x-vertex">
         attribute vec3 position;
-        void main(void) {
+
+        void main() {
             gl_Position = vec4(position, 1.0);
         }
     </script>
     <script id="fs" type="x-shader/x-fragment">
-        void main(void) {
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        precision mediump float;
+
+        void main() {
+            gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
         }
     </script>
     <div class="container">
-      <div class="navbar navbar-inverse">
-        <div class="text-center">
-          <canvas id="canvas"></canvas>
-        </div>
-        <pre id="editor" style="height: 400px"></pre>
+      <div class="text-center">
+        <canvas id="canvas"></canvas>
       </div>
+      <pre id="editor" style="height: 400px"></pre>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>

@@ -53,7 +53,7 @@
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        return {frameBuffer: frameBuffer, depthRenderBuffer : depthRenderBuffer, texture : fTexture};
+        return { frameBuffer: frameBuffer, depthRenderBuffer : depthRenderBuffer, texture : fTexture };
     };
 
     /** 
@@ -75,7 +75,7 @@
      * @return {object} シェーダーオブジェクト
      */
     GLUtil.prototype.compileShader = function(type, text) {
-        var shader = null;
+        let shader = null;
         switch(type) {
             case 0: // 'x-shader/x-vertex'
                 shader = this.gl.createShader(this.gl.VERTEX_SHADER);
@@ -102,7 +102,7 @@
      * @return {object} プログラムオブジェクト
      */
     GLUtil.prototype.linkProgram = function(vs, fs) {
-        var program = this.gl.createProgram();
+        let program = this.gl.createProgram();
 
         this.gl.attachShader(program, vs);
         this.gl.attachShader(program, fs);
@@ -121,7 +121,7 @@
      * @return {object} 頂点バッファオブジェクト
      */
     GLUtil.prototype.createVBO = function(data) {
-        var vbo = this.gl.createBuffer();
+        let vbo = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vbo);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
@@ -134,7 +134,7 @@
      * @return {object} インデックスバッファオブジェクト
      */
     GLUtil.prototype.createIBO = function(data) {
-        var ibo = this.gl.createBuffer();
+        let ibo = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, ibo);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Int16Array(data), this.gl.STATIC_DRAW);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
