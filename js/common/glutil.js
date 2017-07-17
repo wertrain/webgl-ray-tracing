@@ -30,6 +30,32 @@
         return true;
     };
 
+    /**
+     * キャンバスサイズのフレームバッファを作成する
+     * @return {object} フレームバッファ他オブジェクト
+     */
+    GLUtil.prototype.createFrameBuffer = function(width, height){
+        let gl = this.gl;
+        let frameBuffer = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+        let depthRenderBuffer = gl.createRenderbuffer();
+        gl.bindRenderbuffer(gl.RENDERBUFFER, depthRenderBuffer);
+        gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.canvas.width, this.canvas.height);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthRenderBuffer);
+        let fTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, fTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.canvas.width, this.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fTexture, 0);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        return {frameBuffer: frameBuffer, depthRenderBuffer : depthRenderBuffer, texture : fTexture};
+    };
+
     /** 
      * キャンバスをクリアする
      * @param {number} r クリアする色 R
@@ -127,7 +153,7 @@
      * キャンバス幅を取得する
      * @return {number} キャンバス幅
      */
-    GLUtil.prototype.getWidth = function() {
+    GLUtil.prototype.getCanvasWidth = function() {
         return this.canvas.width;
     };
 
@@ -135,7 +161,7 @@
      * キャンバス高さを取得する
      * @return {number} キャンバス高さ
      */
-    GLUtil.prototype.getHeight = function() {
+    GLUtil.prototype.getCanvasHeight = function() {
         return this.canvas.height;
     };
     
