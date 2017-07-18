@@ -12,10 +12,11 @@ var RayTracing = {};
         let editorText = '';
         for (let i = allCodeArray[0].length === 0 ? 1 : 0; i < allCodeArray.length - 1; ++i) {
             let temp = allCodeArray[i];
+            let spaceSize = 4;
             if (temp[0] === ' ')
-                temp = temp.substring(8, temp.lenght)
+                temp = temp.substring(spaceSize * 2, temp.lenght)
             else if (temp[0] === '	')
-                temp = temp.substring(2, temp.lenght)
+                temp = temp.substring(1 * 2, temp.lenght)
             editorText += temp + '\r\n';
         }
         return editorText;
@@ -23,7 +24,7 @@ var RayTracing = {};
     RayTracing.Common.Initialize = function() {
         let aceUtil = new RayTracing.AceUtil();
         let text = CreateShaderText('fs');
-        aceUtil.PresetEditorText('editor', text);
-        aceUtil.Create('editor');
+        aceUtil.presetEditorText('editor', text);
+        aceUtil.create('editor');
     };
 }

@@ -12,7 +12,7 @@
      * Ace の初期表示テキストを設定する
      *
      */
-    AceUtil.prototype.PresetEditorText = function(editorId, text) {
+    AceUtil.prototype.presetEditorText = function(editorId, text) {
         let editorElement = document.getElementById(editorId);
         editorElement.innerHTML = text;
     }
@@ -20,7 +20,7 @@
      * Ace の作成する
      *
      */
-    AceUtil.prototype.Create = function(editorId) {
+    AceUtil.prototype.create = function(editorId) {
         var editor = ace.edit(editorId);
         editor.$blockScrolling = Infinity;
         editor.setOptions({
