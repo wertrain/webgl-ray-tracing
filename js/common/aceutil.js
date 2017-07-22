@@ -27,7 +27,7 @@
             showInvisibles: true
         });
         editor.setTheme('ace/theme/monokai');
-        editor.getSession().setMode('ace/mode/javascript');
+        editor.getSession().setMode('ace/mode/glsl');
         editor.getSession().setUseWorker(false)
     };
     RayTracing.AceUtil = AceUtil;
