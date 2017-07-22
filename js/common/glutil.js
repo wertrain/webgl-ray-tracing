@@ -159,7 +159,7 @@
 
     /** 
      * キャンバスを取得する
-     * @return {number} キャンバス
+     * @return {object} キャンバス
      */
     GLUtil.prototype.getCanvas = function() {
         return this.canvas;
