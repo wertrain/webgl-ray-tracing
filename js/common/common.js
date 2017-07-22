@@ -30,12 +30,56 @@ var RayTracing = {};
         Run();
     };
 
+    // 下記に相当するシェーダーソースコードは埋め込む
+    // テクスチャを画面全体に配置する
+    //<script id="common-vs" type="x-shader/x-vertex">
+    //    attribute vec3 position;
+    //    varying   vec2 vTexCoord;
+    //
+    //    void main() {
+    //        vTexCoord   = (position + 1.0).xy / 2.0;
+    //        gl_Position = vec4(position, 1.0);
+    //    }
+    //</script>
+    //<script id="common-fs" type="x-shader/x-fragment">
+    //    precision mediump float;
+    //
+    //    uniform sampler2D texture;
+    //    varying vec2      vTexCoord;
+    //
+    //    void main() {
+    //        gl_FragColor = texture2D(texture, vTexCoord);
+    //    }
+    //</script>
+    // 頂点を割り当てるのみ
+    // フラグメントシェーダー側は html 側に記述される
+    //<script id="vs" type="x-shader/x-vertex">
+    //    attribute vec3 position;
+    //
+    //    void main() {
+    //        gl_Position = vec4(position, 1.0);
+    //    }
+    //</script>
+    
     var Run = function() {
         let glutil = new RayTracing.GLUtil();
         glutil.initalize('canvas', 512, 512);
+        
+        let mousePosition = [0, 0];
+        let canvas = glutil.getCanvas();
+        canvas.addEventListener('mousemove', 
+            function(eve) {
+                let i = 1 / canvas.width;
+                mousePosition = [
+                    (eve.clientX - canvas.offsetLeft) * i * 2.0 - 1.0,
+                    1.0 - (eve.clientY - canvas.offsetTop) * i * 2.0
+                ];
+            }, true);
 
-        let commonVS = glutil.compileShader(0, document.getElementById('common-vs').text);
-        let commonFS = glutil.compileShader(1, document.getElementById('common-fs').text);
+        let commonVSSource = 'attribute vec3 position; varying vec2 vTexCoord; void main() {vTexCoord = (position + 1.0).xy / 2.0; gl_Position = vec4(position, 1.0); }';
+        let commonFSSource = 'precision mediump float; uniform sampler2D texture; varying vec2 vTexCoord; void main() { gl_FragColor = texture2D(texture, vTexCoord); }';
+        let commonVS = glutil.compileShader(0, commonVSSource);
+        let commonFS = glutil.compileShader(1, commonFSSource);
         let commonProgram = glutil.linkProgram(commonVS, commonFS);
 
         let gl = glutil.getGL();
@@ -43,7 +87,8 @@ var RayTracing = {};
         uniformsCommon.texture = gl.getUniformLocation(commonProgram, 'texture');
         uniformsCommon.position = gl.getAttribLocation(commonProgram, 'position');
 
-        let vs = glutil.compileShader(0, document.getElementById('vs').text)
+        let vsSource = 'attribute vec3 position; void main() { gl_Position = vec4(position, 1.0); }'
+        let vs = glutil.compileShader(0, vsSource);
         let fs = glutil.compileShader(1, document.getElementById('fs').text);
         let program = glutil.linkProgram(vs, fs);
         let uniforms = {};
@@ -60,7 +105,7 @@ var RayTracing = {};
         
         gl.activeTexture(gl.TEXTURE0);
         gl.clearColor(0, 0, 0, 1);
-        gl.viewport(0, 0, glutil.getCanvasWidth(), glutil.getCanvasHeight());
+        gl.viewport(0, 0, canvas.width, canvas.height);
         let nowTime = new Date().getTime();
         (function() {
             let time = (new Date().getTime() - nowTime) * 0.001;
@@ -70,9 +115,9 @@ var RayTracing = {};
             gl.enableVertexAttribArray(uniforms.position);
             gl.vertexAttribPointer(uniforms.position, 3, gl.FLOAT, false, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            //gl.uniform2fv(uniforms.mouse, mousePosition);
+            gl.uniform2fv(uniforms.mouse, mousePosition);
             gl.uniform1f(uniforms.time, time);
-            gl.uniform2fv(uniforms.resolution, [glutil.getCanvasWidth(), glutil.getCanvasHeight()]);
+            gl.uniform2fv(uniforms.resolution, [canvas.width, canvas.height]);
             gl.uniform1i(uniforms.sampler, 0);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
             

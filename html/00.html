@@ -7,32 +7,6 @@
     <link href="../css/style.css" rel="stylesheet">
   </head>
   <body>
-    <script id="common-vs" type="x-shader/x-vertex">
-        attribute vec3 position;
-        varying   vec2 vTexCoord;
-
-        void main() {
-            vTexCoord   = (position + 1.0).xy / 2.0;
-            gl_Position = vec4(position, 1.0);
-        }
-    </script>
-    <script id="common-fs" type="x-shader/x-fragment">
-        precision mediump float;
-
-        uniform sampler2D texture;
-        varying vec2      vTexCoord;
-
-        void main() {
-            gl_FragColor = texture2D(texture, vTexCoord);
-        }
-    </script>
-    <script id="vs" type="x-shader/x-vertex">
-        attribute vec3 position;
-
-        void main() {
-            gl_Position = vec4(position, 1.0);
-        }
-    </script>
     <script id="fs" type="x-shader/x-fragment">
         precision mediump float;
 

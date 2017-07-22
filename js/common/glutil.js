@@ -158,11 +158,11 @@
     };
 
     /** 
-     * キャンバス高さを取得する
-     * @return {number} キャンバス高さ
+     * キャンバスを取得する
+     * @return {number} キャンバス
      */
-    GLUtil.prototype.getCanvasHeight = function() {
-        return this.canvas.height;
+    GLUtil.prototype.getCanvas = function() {
+        return this.canvas;
     };
     
     RayTracing.GLUtil = GLUtil;
