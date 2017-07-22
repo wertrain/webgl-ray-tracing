@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL Ray Tracing - 01</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <script id="fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform float time;
+        uniform vec2  resolution;
+
+        struct Ray {
+            vec3 origin;
+            vec3 direction;
+        };
+
+        void main(void) {
+            // fragment position
+            vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
+            
+            // ray init
+            Ray ray;
+            ray.origin = vec3(0.0, 0.0, 5.0);
+            ray.direction = normalize(vec3(p.x, p.y, -1.0));
+            
+            gl_FragColor = vec4(ray.direction, 1.0);
+        }
+    </script>
+    <div class="container">
+      <div class="text-center">
+        <canvas id="canvas"></canvas>
+      </div>
+      <pre id="editor" style="height: 400px"></pre>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="../js/common/common.js"></script>
+    <script src="../js/common/glutil.js"></script>
+    <script src="../js/common/aceutil.js"></script>
+    <script>
+        RayTracing.Common.initialize();
+    </script>
+  </body>
+</html>
