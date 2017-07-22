@@ -9,12 +9,13 @@
   <body>
     <script id="fs" type="x-shader/x-fragment">
         precision mediump float;
-        uniform float time;
-        uniform vec2  resolution;
+        uniform float time;       // 経過時間
+        uniform vec2  resolution; // 画面サイズ
 
+        // レイの定義
         struct Ray {
-            vec3 origin;
-            vec3 direction;
+            vec3 origin;    // 始点
+            vec3 direction; // 方向
         };
 
         void main(void) {
