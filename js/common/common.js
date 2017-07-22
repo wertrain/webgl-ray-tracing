@@ -27,10 +27,10 @@ var RayTracing = {};
         let text = CreateShaderText('fs');
         aceUtil.presetEditorText('editor', text);
         aceUtil.create('editor');
-        createGL();
+        Run();
     };
 
-    var createGL = function() {
+    var Run = function() {
         let glutil = new RayTracing.GLUtil();
         glutil.initalize('canvas', 512, 512);
 
