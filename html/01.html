@@ -18,14 +18,17 @@
         };
 
         void main(void) {
-            // fragment position
+            // gl_FragCoord.xy は現在処理しようとしているピクセル座標
+            // スクリーンの中心を原点として X と Y のそれぞれが -1.0 〜 1.0 となるような座標系を計算
             vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
             
-            // ray init
+            // レイを作成する
             Ray ray;
             ray.origin = vec3(0.0, 0.0, 5.0);
+            // Z 値がマイナス方向 ＝ 奥側に向かうレイ
             ray.direction = normalize(vec3(p.x, p.y, -1.0));
             
+            // 先ほど作成した座標をそのまま色要素として使用する
             gl_FragColor = vec4(ray.direction, 1.0);
         }
     </script>
