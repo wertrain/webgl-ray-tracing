@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL Ray Tracing - 02</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <script id="fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform float time;       // 経過時間
+        uniform vec2  resolution; // 画面サイズ
+
+        // レイの定義
+        struct Ray {
+            vec3 origin;    // 始点
+            vec3 direction; // 方向
+        };
+
+        struct Sphere {
+            float radius;
+            vec3  position;
+            vec3  color;
+        };
+
+        bool intersectSphere(Ray R, Sphere S) {
+            vec3  a = R.origin - S.position;
+            float b = dot(a, R.direction);
+            float c = dot(a, a) - (S.radius * S.radius);
+            float d = b * b - c;
+            if(d > 0.0) {
+                float t = -b - sqrt(d);
+                return (t > 0.0);
+            }
+            return false;
+        }
+        
+        void main(void) {
+            // gl_FragCoord.xy は現在処理しようとしているピクセル座標
+            // スクリーンの中心を原点として X と Y のそれぞれが -1.0 〜 1.0 となるような座標系を計算
+            vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
+
+            // レイを作成する
+            Ray ray;
+            ray.origin = vec3(0.0, 0.0, 5.0);
+            // Z 値がマイナス方向 ＝ 奥側に向かうレイ
+            ray.direction = normalize(vec3(p.x, p.y, -1.0));
+
+            // 球を作成する
+            Sphere sphere;
+            sphere.radius = 1.0;
+            sphere.position = vec3(0.0);
+            sphere.color = vec3(1.0);
+
+            // 当たり判定
+            vec3 destColor = vec3(0.0);
+            if (intersectSphere(ray, sphere)) {
+                destColor = sphere.color;
+            }
+
+            gl_FragColor = vec4(destColor, 1.0);
+        }
+    </script>
+    <div class="container">
+      <div class="text-center">
+        <canvas id="canvas"></canvas>
+      </div>
+      <pre id="editor" style="height: 400px"></pre>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="../js/common/common.js"></script>
+    <script src="../js/common/glutil.js"></script>
+    <script src="../js/common/aceutil.js"></script>
+    <script>
+        RayTracing.Common.initialize();
+    </script>
+  </body>
+</html>
