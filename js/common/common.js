@@ -7,7 +7,7 @@ var RayTracing = {};
         let shaderElement = document.getElementById(shaderElementId);
         let allCode = shaderElement.innerHTML;
         let allCodeArray = allCode.split(/\r\n|\r|\n/);
-        // 現在のシェーダー記述方法にに合わせて
+        // 現在のシェーダー記述方法に合わせて
         // 先頭の半角スペースとタブを（半ば決め打ちで）カットする
         let editorText = '';
         for (let i = allCodeArray[0].length === 0 ? 1 : 0; i < allCodeArray.length - 1; ++i) {
