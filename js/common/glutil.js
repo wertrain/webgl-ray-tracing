@@ -34,7 +34,7 @@
      * キャンバスサイズのフレームバッファを作成する
      * @return {object} フレームバッファ他オブジェクト
      */
-    GLUtil.prototype.createFrameBuffer = function(width, height){
+    GLUtil.prototype.createFrameBuffer = function(){
         let gl = this.gl;
         let frameBuffer = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
