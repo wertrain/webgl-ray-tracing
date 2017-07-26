@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL Ray Tracing - 04</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <script id="fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform float time;       // 経過時間
+        uniform vec2  resolution; // 画面サイズ
+
+        // レイの定義
+        struct Ray {
+            vec3 origin;    // 始点
+            vec3 direction; // 方向
+        };
+
+        // 床の定義
+        struct Floor {
+            vec3 position;
+            vec3 normal;
+            vec3 color;
+        };
+
+        struct Intersection {
+            bool hit;       // 交差したかどうかのフラグ
+            vec3 hitPoint;  // 交点の座標
+            vec3 normal;    // 交点位置の法線
+            vec3 color;     // 交点位置の色
+            float distance; // 距離
+        };
+        
+        const vec3 lightDirection = vec3(0.577);
+
+        void intersectPlane(Ray R, Floor P, inout Intersection I) {
+            float d = -dot(P.position, P.normal);
+            float v = dot(R.direction, P.normal);
+            float t = -(dot(R.origin, P.normal) + d) / v;
+            if(t > 0.0 && t < I.distance) {
+                I.hitPoint = R.origin + R.direction * t;
+                I.normal = P.normal;
+                float d = clamp(dot(I.normal, lightDirection), 0.1, 1.0);
+                float m = mod(I.hitPoint.x, 2.0);
+                float n = mod(I.hitPoint.z, 2.0);
+                if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
+                    d *= 0.5;
+                }
+                float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;
+                I.color = P.color * d * f;
+                I.distance = t;
+            }
+        }
+        
+        void main(void) {
+            // gl_FragCoord.xy は現在処理しようとしているピクセル座標
+            // スクリーンの中心を原点として X と Y のそれぞれが -1.0 〜 1.0 となるような座標系を計算
+            vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
+
+            // レイを作成する
+            Ray ray;
+            ray.origin = vec3(0.0, 2.0, 6.0);
+            // Z 値がマイナス方向 ＝ 奥側に向かうレイ
+            ray.direction = normalize(vec3(p.x, p.y, -1.0));
+
+            // 床を作成する
+            Floor floor;
+            floor.position = vec3(0.0, -1.0, 0.0);
+            floor.normal = vec3(0.0, 1.0, 0.0);
+            floor.color = vec3(1.0);
+
+            Intersection i;
+            i.hitPoint = vec3(0.0);
+            i.normal = vec3(0.0);
+            i.color = vec3(0.0);
+            i.distance = 1.0e+30;
+    
+            // 判定関数の呼び出し
+            intersectPlane(ray, floor, i);
+            gl_FragColor = vec4(i.color, 1.0);
+        }
+    </script>
+    <div class="container">
+      <div class="text-center">
+        <canvas id="canvas"></canvas>
+      </div>
+      <pre id="editor" style="height: 400px"></pre>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="../js/common/common.js"></script>
+    <script src="../js/common/glutil.js"></script>
+    <script src="../js/common/aceutil.js"></script>
+    <script>
+        RayTracing.Common.initialize();
+    </script>
+  </body>
+</html>
