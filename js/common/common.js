@@ -3,6 +3,12 @@ var RayTracing = {};
     'use strict';
 
     RayTracing.Common = {};
+    
+    /**
+     * 現在のシェーダー記述方法に合わせて
+     * 先頭の半角スペースとタブを（半ば決め打ちで）カット
+     *
+     */
     let CreateShaderText = function(shaderElementId) {
         let shaderElement = document.getElementById(shaderElementId);
         let allCode = shaderElement.innerHTML;
@@ -22,6 +28,10 @@ var RayTracing = {};
         return editorText;
     };
 
+    /**
+     * 共通部分を初期化する。
+     *
+     */
     RayTracing.Common.initialize = function() {
         let aceUtil = new RayTracing.AceUtil();
         let text = CreateShaderText('fs');
@@ -61,6 +71,10 @@ var RayTracing = {};
     //    }
     //</script>
     
+    /**
+     * 共通部分の動作を開始する。
+     *
+     */
     var Run = function() {
         let glutil = new RayTracing.GLUtil();
         glutil.initalize('canvas', 512, 512);
