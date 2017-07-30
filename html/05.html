@@ -2,7 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8">
-    <title>WebGL Ray Tracing - 04</title>
+    <title>WebGL Ray Tracing - 05</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link href="../css/style.css" rel="stylesheet">
   </head>
@@ -12,13 +12,17 @@
         uniform float time;       // 経過時間
         uniform vec2  resolution; // 画面サイズ
 
-        // レイの定義
         struct Ray {
-            vec3 origin;    // 始点
-            vec3 direction; // 方向
+            vec3 origin;
+            vec3 direction;
         };
 
-        // 床の定義
+        struct Sphere {
+            float radius;
+            vec3  position;
+            vec3  color;
+        };
+
         struct Floor {
             vec3 position;
             vec3 normal;
@@ -26,60 +30,123 @@
         };
 
         struct Intersection {
-            bool hit;       // 交差したかどうかのフラグ
-            vec3 hitPoint;  // 交点の座標
-            vec3 normal;    // 交点位置の法線
-            vec3 color;     // 交点位置の色
-            float distance; // 距離
+            int   hit;
+            vec3  hitPoint;
+            vec3  normal;
+            vec3  color;
+            float distance;
+            vec3  rayDir;
         };
-        
-        const vec3 lightDirection = vec3(0.577);
 
-        void intersectPlane(Ray R, Floor P, inout Intersection I) {
-            float d = -dot(P.position, P.normal);
-            float v = dot(R.direction, P.normal);
-            float t = -(dot(R.origin, P.normal) + d) / v;
-            if(t > 0.0 && t < I.distance) {
+        const vec3  LDR = vec3(0.577);  // 光源の強度
+        const float EPS = 0.0001;
+        const int   MAX_REF = 4;        // 反射回数
+
+        Sphere sphere[3];
+        Floor floor;
+
+        void intersectInit(inout Intersection I) {
+            I.hit      = 0;
+            I.hitPoint = vec3(0.0);
+            I.normal   = vec3(0.0);
+            I.color    = vec3(0.0);
+            I.distance = 1.0e+30;
+            I.rayDir   = vec3(0.0);
+        }
+
+        void intersectSphere(Ray R, Sphere S, inout Intersection I) {
+            vec3  a = R.origin - S.position;
+            float b = dot(a, R.direction);
+            float c = dot(a, a) - (S.radius * S.radius);
+            float d = b * b - c;
+            float t = -b - sqrt(d);
+            if(d > 0.0 && t > EPS && t < I.distance) {
                 I.hitPoint = R.origin + R.direction * t;
-                I.normal = P.normal;
-                float d = clamp(dot(I.normal, lightDirection), 0.1, 1.0);
+                I.normal = normalize(I.hitPoint - S.position);
+                d = clamp(dot(LDR, I.normal), 0.1, 1.0);
+                I.color = S.color * d;
+                I.distance = t;
+                I.hit++;
+                I.rayDir = R.direction;
+            }
+        }
+
+        void intersectFloor(Ray R, Floor F, inout Intersection I) {
+            float d = -dot(F.position, F.normal);
+            float v = dot(R.direction, F.normal);
+            float t = -(dot(R.origin, F.normal) + d) / v;
+            if(t > EPS && t < I.distance) {
+                I.hitPoint = R.origin + R.direction * t;
+                I.normal = F.normal;
+                float d = clamp(dot(LDR, I.normal), 0.1, 1.0);
                 float m = mod(I.hitPoint.x, 2.0);
                 float n = mod(I.hitPoint.z, 2.0);
                 if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
                     d *= 0.5;
                 }
                 float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;
-                I.color = P.color * d * f;
+                I.color = F.color * d * f;
                 I.distance = t;
+                I.hit++;
+                I.rayDir = R.direction;
             }
         }
-        
-        void main(void) {
-            // gl_FragCoord.xy は現在処理しようとしているピクセル座標
-            // スクリーンの中心を原点として X と Y のそれぞれが -1.0 〜 1.0 となるような座標系を計算
+
+        void intersectExec(Ray R, inout Intersection I) {
+            intersectSphere(R, sphere[0], I);
+            intersectFloor(R, floor, I);
+        }
+
+        void main(void){
+            // fragment position
             vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
 
-            // レイを作成する
+            // ray init
             Ray ray;
             ray.origin = vec3(0.0, 2.0, 6.0);
-            // Z 値がマイナス方向 ＝ 奥側に向かうレイ
             ray.direction = normalize(vec3(p.x, p.y, -1.0));
 
-            // 床を作成する
-            Floor floor;
+            // sphere init
+            sphere[0].radius = 1.0;
+            sphere[0].position = vec3(0.0);
+            sphere[0].color = vec3(1.0);
+
+            // floor init
             floor.position = vec3(0.0, -1.0, 0.0);
             floor.normal = vec3(0.0, 1.0, 0.0);
             floor.color = vec3(1.0);
 
-            Intersection i;
-            i.hitPoint = vec3(0.0);
-            i.normal = vec3(0.0);
-            i.color = vec3(0.0);
-            i.distance = 1.0e+30;
-    
-            // 判定関数の呼び出し
-            intersectPlane(ray, floor, i);
-            gl_FragColor = vec4(i.color, 1.0);
+            // intersection init
+            Intersection its;
+            intersectInit(its);
+
+            // hit check
+            vec3 destColor = vec3(ray.direction.y);
+            vec3 tempColor = vec3(1.0);
+            Ray q;
+            intersectExec(ray, its);
+            // 反射を反映する
+            if(its.hit > 0) {
+                // レイが反射した位置の色を反映する
+                // 一時領域に色を合成して保持
+                destColor = its.color;
+                tempColor *= its.color;
+                // 反射回数分ループする
+                for(int j = 1; j < MAX_REF; ++j) {
+                    q.origin = its.hitPoint + its.normal * EPS;
+                    // 入射角と法線方向から反射角度を計算する
+                    q.direction = reflect(its.rayDir, its.normal);
+                    // 計算した反射角を使用して再トレース
+                    intersectExec(q, its);
+                    if(its.hit > j) {
+                        // レイが反射した位置の色を反映する
+                        // 一時領域に色を合成して保持
+                        destColor += tempColor * its.color;
+                        tempColor *= its.color;
+                    }
+                }
+            }
+            gl_FragColor = vec4(destColor, 1.0);
         }
     </script>
     <div class="container">
