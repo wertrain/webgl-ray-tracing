@@ -13,8 +13,8 @@
         uniform vec2  resolution; // 画面サイズ
 
         struct Ray {
-            vec3 origin;
-            vec3 direction;
+            vec3 origin;    // 始点
+            vec3 direction; // 方向
         };
 
         struct Sphere {
@@ -39,7 +39,7 @@
         };
 
         const vec3  LDR = vec3(0.577);  // 光源の強度
-        const float EPS = 0.0001;
+        const float EPS = 0.0001;       // 疑似イプシロン(本来の意味としては1.0+x!=1.0となる最小のx値)
         const int   MAX_REF = 4;        // 反射回数
 
         Sphere sphere[1];
@@ -55,6 +55,7 @@
         }
 
         void intersectSphere(Ray R, Sphere S, inout Intersection I) {
+            // 球からレイの始点方向へのベクトル
             vec3  a = R.origin - S.position;
             float b = dot(a, R.direction);
             float c = dot(a, a) - (S.radius * S.radius);
@@ -72,18 +73,22 @@
         }
 
         void intersectFloor(Ray R, Floor F, inout Intersection I) {
+            // 床位置と床法線の内積(-)
             float d = -dot(F.position, F.normal);
+            // レイ方向と床法線の内積
             float v = dot(R.direction, F.normal);
             float t = -(dot(R.origin, F.normal) + d) / v;
             if(t > EPS && t < I.distance) {
                 I.hitPoint = R.origin + R.direction * t;
                 I.normal = F.normal;
                 float d = clamp(dot(LDR, I.normal), 0.1, 1.0);
+                // チェック模様を描く
                 float m = mod(I.hitPoint.x, 2.0);
                 float n = mod(I.hitPoint.z, 2.0);
                 if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
                     d *= 0.5;
                 }
+                // 奥にあるものほど暗くしていく
                 float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;
                 I.color = F.color * d * f;
                 I.distance = t;
