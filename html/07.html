@@ -2,7 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8">
-    <title>WebGL Ray Tracing - 06</title>
+    <title>WebGL Ray Tracing - 07</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link href="../css/style.css" rel="stylesheet">
   </head>
@@ -124,6 +124,11 @@
             sphere[2].radius = 1.0;
             sphere[2].position = vec3(3.0, 1.0, 0.0);
             sphere[2].color = vec3(0.0, 0.0, 1.0);
+            
+            sphere[0].position.x = sin(time);
+            sphere[0].position.y = 1.0 + cos(time);
+            sphere[1].position.y = 1.0 - cos(time);
+            sphere[2].position.x = 3.0 + sin(time);
             
             // 床を作成する
             floor.position = vec3(0.0, -1.0, 0.0);
