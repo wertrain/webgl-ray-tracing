@@ -17,8 +17,7 @@
             vec3 direction; // 方向
         };
 
-        struct Sphere {
-            float radius;
+        struct Box {
             vec3  position;
             vec3  color;
         };
@@ -42,7 +41,7 @@
         const float EPS = 0.0001;       // 疑似イプシロン(本来の意味としては1.0+x!=1.0となる最小のx値)
         const int   MAX_REF = 4;        // 反射回数
 
-        Sphere sphere[3];
+        Box box;
         Floor floor;
 
         void intersectInit(inout Intersection I) {
@@ -54,9 +53,9 @@
             I.rayDir   = vec3(0.0);
         }
 
-        void intersectSphere(Ray R, Sphere S, inout Intersection I) {
+        void intersectBox(Ray R, Box B, inout Intersection I) {
             // 球からレイの始点方向へのベクトル
-            vec3  a = R.origin - S.position;
+            /*vec3  a = R.origin - S.position;
             float b = dot(a, R.direction);
             float c = dot(a, a) - (S.radius * S.radius);
             float d = b * b - c;
@@ -69,7 +68,7 @@
                 I.distance = t;
                 I.hit++;
                 I.rayDir = R.direction;
-            }
+            }*/
         }
 
         void intersectFloor(Ray R, Floor F, inout Intersection I) {
@@ -98,9 +97,7 @@
         }
 
         void intersectExec(Ray R, inout Intersection I) {
-            intersectSphere(R, sphere[0], I);
-            intersectSphere(R, sphere[1], I);
-            intersectSphere(R, sphere[2], I);
+            intersectBox(R, box, I);
             intersectFloor(R, floor, I);
         }
 
@@ -113,22 +110,6 @@
             ray.origin = vec3(0.0, 2.0, 6.0);
             // Z 値がマイナス方向 ＝ 奥側に向かうレイ
             ray.direction = normalize(vec3(p.x, p.y, -1.0));
-
-            // 球を作成する
-            sphere[0].radius = 1.0;
-            sphere[0].position = vec3(0.0, 1.0, 0.0);
-            sphere[0].color = vec3(0.0, 1.0, 0.0);
-            sphere[1].radius = 1.0;
-            sphere[1].position = vec3(-3.0, 1.0, 0.0);
-            sphere[1].color = vec3(1.0, 0.0, 0.0);
-            sphere[2].radius = 1.0;
-            sphere[2].position = vec3(3.0, 1.0, 0.0);
-            sphere[2].color = vec3(0.0, 0.0, 1.0);
-            
-            sphere[0].position.x = sin(time);
-            sphere[0].position.y = 1.0 + cos(time);
-            sphere[1].position.y = 1.0 - cos(time);
-            sphere[2].position.x = 3.0 + sin(time);
             
             // 床を作成する
             floor.position = vec3(0.0, -1.0, 0.0);
