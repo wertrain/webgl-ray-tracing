@@ -57,6 +57,7 @@
         }
 
         void intersectCube(Ray R, Cube C, inout Intersection I) {
+            // 参考: https://github.com/lighttransport/nanort/blob/master/examples/minecraft/render.cc
             vec3 bmin = C.position - vec3(C.width);
             vec3 bmax = C.position + vec3(C.width);
             
@@ -78,8 +79,7 @@
             // Z
             float tminZ = (minZ - R.origin.z) * R.directionInverse.z;
             float tmaxZ = (maxZ - R.origin.z) * R.directionInverse.z;
-            
-            
+
             float tmin = max(tminZ, max(tminY, tminX));
             float tmax = min(tmaxZ, min(tmaxY, tmaxX));
             
