@@ -42,7 +42,7 @@
 
         const vec3  LDR = vec3(0.577);  // 光源の強度
         const float EPS = 0.0001;       // 疑似イプシロン(本来の意味としては1.0+x!=1.0となる最小のx値)
-        const int   MAX_REF = 4;        // 反射回数
+        const int   MAX_REF = 1;        // 反射回数
 
         Cube cube;
         Floor floor;
@@ -87,7 +87,7 @@
                 I.hit++;
                 I.rayDir = R.direction;
                 I.distance = tmin;
-                I.color = vec3(0.0);
+                I.color = C.color;
             }
         }
 
