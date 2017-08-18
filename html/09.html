@@ -83,11 +83,20 @@
             float tmin = max(tminZ, max(tminY, tminX));
             float tmax = min(tmaxZ, min(tmaxY, tmaxX));
             
+            // 球からレイの始点方向へのベクトル
+            vec3  a = R.origin - C.position;
+            float b = dot(a, R.direction);
+            float c = dot(a, a) - (C.width * C.width);
+            float d = b * b - c;
+            float t = -b - sqrt(d);
             if (tmin <= tmax) {
+                I.hitPoint = R.origin + R.direction * t;
+                I.normal = normalize(I.hitPoint - C.position);
+                d = clamp(dot(LDR, I.normal), 0.1, 1.0);
+                I.color = C.color * d;
                 I.hit++;
                 I.rayDir = R.direction;
                 I.distance = tmin;
-                I.color = C.color;
             }
         }
 
