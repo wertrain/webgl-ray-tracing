@@ -125,12 +125,15 @@
             float b = dot(a, R.direction);
             float c = dot(a, a) - (C.width * C.width);
             float d = b * b - c;
-            float t = -b - sqrt(d);
             if (tmin <= tmax) {
-                I.hitPoint = R.origin + R.direction * t;
-                I.normal = culcNormal(R, C);
                 d = clamp(dot(LDR, I.normal), 0.1, 1.0);
-                I.color = C.color * d;
+                vec3 normal = culcNormal(R, C);
+                float v = dot(R.direction, normal);
+                float t = -(dot(R.origin, normal) + d) / v;
+                I.hitPoint = R.origin + R.direction * t;
+                I.normal = normal;
+                float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.01;
+                I.color = C.color * d * f;
                 I.hit++;
                 I.rayDir = R.direction;
                 I.distance = tmin;
