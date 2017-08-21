@@ -120,14 +120,9 @@
             float tmin = max(tminZ, max(tminY, tminX));
             float tmax = min(tmaxZ, min(tmaxY, tmaxX));
             
-            // 箱からレイの始点方向へのベクトル
-            vec3  a = R.origin - C.position;
-            float b = dot(a, R.direction);
-            float c = dot(a, a) - (C.width * C.width);
-            float d = b * b - c;
             if (tmin <= tmax) {
-                d = clamp(dot(LDR, I.normal), 0.1, 1.0);
                 vec3 normal = culcNormal(R, C);
+                float d = clamp(dot(LDR, normal), 0.1, 1.0);
                 float v = dot(R.direction, normal);
                 float t = -(dot(R.origin, normal) + d) / v;
                 I.hitPoint = R.origin + R.direction * t;
