@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL Ray Tracing - 09</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <script id="fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform float time;       // 経過時間
+        uniform vec2  resolution; // 画面サイズ
+
+        struct Ray {
+            vec3 origin;    // 始点
+            vec3 direction; // 方向
+            vec3 directionInverse;
+            vec3 directionSign;
+        };
+
+        struct Cube {
+            vec3  position;
+            float width;
+            vec3  color;
+        };
+
+        struct Floor {
+            vec3 position;
+            vec3 normal;
+            vec3 color;
+        };
+
+        struct Intersection {
+            int   hit;       // レイのヒット回数
+            vec3  hitPoint;  // レイのヒット位置
+            vec3  normal;    // 法線
+            vec3  color;     // 色
+            float distance;  // 距離
+            vec3  rayDir;    // レイの方向
+        };
+
+        const vec3  LDR = vec3(0.577);  // 光源の強度
+        const float EPS = 0.0001;       // 疑似イプシロン(本来の意味としては1.0+x!=1.0となる最小のx値)
+        const int   MAX_REF = 1;        // 反射回数
+
+        Cube cube;
+        Floor floor;
+
+        void intersectInit(inout Intersection I) {
+            I.hit      = 0;
+            I.hitPoint = vec3(0.0);
+            I.normal   = vec3(0.0);
+            I.color    = vec3(0.0);
+            I.distance = 1.0e+30;
+            I.rayDir   = vec3(0.0);
+        }
+
+        vec3 culcNormal(Ray R, Cube C) {
+            vec3 bmin = C.position - vec3(C.width);
+            vec3 bmax = C.position + vec3(C.width);
+
+            float minX = R.directionSign.x > 0.0 ? bmax.x : bmin.x;
+            float minY = R.directionSign.y > 0.0 ? bmax.y : bmin.y;
+            float minZ = R.directionSign.z > 0.0 ? bmax.z : bmin.z;
+
+            // X
+            float tminX = (minX - R.origin.x) * R.directionInverse.x;
+
+            // Y
+            float tminY = (minY - R.origin.y) * R.directionInverse.y;
+
+            // Z
+            float tminZ = (minZ - R.origin.z) * R.directionInverse.z;
+
+            int axis = 0;
+            float tmin = tminX;
+            if (tmin < tminY) {
+                axis = 1;
+                tmin = tminY;
+            }
+            if (tmin < tminZ) {
+                axis = 2;
+                tmin = tminZ;
+            }
+            
+            float x = R.directionSign.x > 0.0 ? 1.0 : -1.0;
+            float y = R.directionSign.y > 0.0 ? 1.0 : -1.0;
+            float z = R.directionSign.z > 0.0 ? 1.0 : -1.0;
+            if (axis == 0) return vec3(x, 0, 0);
+            else if (axis == 1) return vec3(0, y, 0);
+            else if (axis == 2) return vec3(0, 0, z);
+            else return vec3(0.0);
+        }
+
+        void intersectCube(Ray R, Cube C, inout Intersection I) {
+            // 参考: https://github.com/lighttransport/nanort/blob/master/examples/minecraft/render.cc
+            vec3 bmin = C.position - vec3(C.width);
+            vec3 bmax = C.position + vec3(C.width);
+            
+            float minX = R.directionSign.x > 0.0 ? bmax.x : bmin.x;
+            float minY = R.directionSign.y > 0.0 ? bmax.y : bmin.y;
+            float minZ = R.directionSign.z > 0.0 ? bmax.z : bmin.z;
+            float maxX = R.directionSign.x > 0.0 ? bmin.x : bmax.x;
+            float maxY = R.directionSign.y > 0.0 ? bmin.y : bmax.y;
+            float maxZ = R.directionSign.z > 0.0 ? bmin.z : bmax.z;
+
+            // X
+            float tminX = (minX - R.origin.x) * R.directionInverse.x;
+            float tmaxX = (maxX - R.origin.x) * R.directionInverse.x;
+
+            // Y
+            float tminY = (minY - R.origin.y) * R.directionInverse.y;
+            float tmaxY = (maxY - R.origin.y) * R.directionInverse.y;
+
+            // Z
+            float tminZ = (minZ - R.origin.z) * R.directionInverse.z;
+            float tmaxZ = (maxZ - R.origin.z) * R.directionInverse.z;
+
+            float tmin = max(tminZ, max(tminY, tminX));
+            float tmax = min(tmaxZ, min(tmaxY, tmaxX));
+            
+            if (tmin <= tmax) {
+                vec3 normal = culcNormal(R, C);
+                float d = clamp(dot(LDR, normal), 0.1, 1.0);
+                float v = dot(R.direction, normal);
+                float t = -(dot(R.origin, normal) + d) / v;
+                I.hitPoint = R.origin + R.direction * t;
+                I.normal = normal;
+                float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.01;
+                I.color = C.color * d * f;
+                I.hit++;
+                I.rayDir = R.direction;
+                I.distance = tmin;
+            }
+        }
+
+        void intersectFloor(Ray R, Floor F, inout Intersection I) {
+            // 床位置と床法線の内積(-)
+            float d = -dot(F.position, F.normal);
+            // レイ方向と床法線の内積
+            float v = dot(R.direction, F.normal);
+            float t = -(dot(R.origin, F.normal) + d) / v;
+            if(t > EPS && t < I.distance) {
+                I.hitPoint = R.origin + R.direction * t;
+                I.normal = F.normal;
+                float d = clamp(dot(LDR, I.normal), 0.1, 1.0);
+                // チェック模様を描く
+                float m = mod(I.hitPoint.x, 2.0);
+                float n = mod(I.hitPoint.z, 2.0);
+                if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
+                    d *= 0.5;
+                }
+                // 奥にあるものほど暗くしていく
+                float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;
+                I.color = F.color * d * f;
+                I.distance = t;
+                I.hit++;
+                I.rayDir = R.direction;
+            }
+        }
+
+        void intersectExec(Ray R, inout Intersection I) {
+            intersectCube(R, cube, I);
+            intersectFloor(R, floor, I);
+        }
+
+        void main(void) {
+            // ピクセルの位置
+            vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
+
+            // レイを作成する
+            Ray ray;
+            ray.origin = vec3(0.0, 3.5, 6.0);
+            // Z 値がマイナス方向 ＝ 奥側に向かうレイ
+            ray.direction = normalize(vec3(p.x, p.y, -1.0));
+            
+            ray.directionInverse.x = 1.0 / ray.direction.x;
+            ray.directionInverse.y = 1.0 / ray.direction.y;
+            ray.directionInverse.z = 1.0 / ray.direction.z;
+            
+            ray.directionSign.x = ray.direction.x < 0.0 ? 1.0 : 0.0;
+            ray.directionSign.y = ray.direction.y < 0.0 ? 1.0 : 0.0;
+            ray.directionSign.z = ray.direction.z < 0.0 ? 1.0 : 0.0;
+            
+            cube.position = vec3(0.0, 2.0, 0.0);
+            cube.width = 1.0;
+            cube.color = vec3(1.0);
+            
+            // 床を作成する
+            floor.position = vec3(0.0, -1.0, 0.0);
+            floor.normal = vec3(0.0, 1.0, 0.0);
+            floor.color = vec3(1.0);
+
+            // 判定オブジェクトを準備
+            Intersection its;
+            intersectInit(its);
+
+            // レイの反射
+            vec3 destColor = vec3(ray.direction.y);
+            vec3 tempColor = vec3(1.0);
+            Ray q;
+            intersectExec(ray, its);
+            // 反射を反映する
+            if(its.hit > 0) {
+                // レイが反射した位置の色を反映する
+                // 一時領域に色を合成して保持
+                destColor = its.color;
+                tempColor *= its.color;
+                // 反射回数分ループする
+                for(int j = 1; j < MAX_REF; ++j) {
+                    q.origin = its.hitPoint + its.normal * EPS;
+                    // 入射角と法線方向から反射角度を計算する
+                    q.direction = reflect(its.rayDir, its.normal);
+                    // 計算した反射角を使用して再トレース
+                    intersectExec(q, its);
+                    if(its.hit > j) {
+                        // レイが反射した位置の色を反映する
+                        // 一時領域に色を合成して保持
+                        destColor += tempColor * its.color;
+                        tempColor *= its.color;
+                    }
+                }
+            }
+            gl_FragColor = vec4(destColor, 1.0);
+        }
+    </script>
+    <div class="container">
+      <div class="text-center">
+        <canvas id="canvas"></canvas>
+      </div>
+      <pre id="editor" style="height: 400px"></pre>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="../js/common/common.js"></script>
+    <script src="../js/common/glutil.js"></script>
+    <script src="../js/common/aceutil.js"></script>
+    <script>
+        RayTracing.Common.initialize();
+    </script>
+  </body>
+</html>
