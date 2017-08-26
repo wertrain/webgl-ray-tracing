@@ -61,10 +61,6 @@
             I.distance = 1.0e+30;
             I.rayDir   = vec3(0.0);
         }
-        
-        void intersectSphereLight(Ray R, SphereLight L, inout Intersection I) {
-        
-        }
 
         void intersectSphere(Ray R, Sphere S, inout Intersection I) {
             // 球からレイの始点方向へのベクトル
@@ -109,9 +105,28 @@
             }
         }
 
+        void intersectSphereLight(Ray R, SphereLight L, inout Intersection I) {
+            // 球からレイの始点方向へのベクトル
+            vec3  a = R.origin - L.position;
+            float b = dot(a, R.direction);
+            float c = dot(a, a) - (L.radius * L.radius);
+            float d = b * b - c;
+            float t = -b - sqrt(d);
+            if(d > 0.0 && t > EPS && t < I.distance) {
+                I.hitPoint = R.origin + R.direction;
+                I.normal = normalize(I.hitPoint - L.position);
+                d = clamp(dot(LDR * L.intensity, I.normal), 0.1, 1.0);
+                I.color = L.color * d;
+                I.distance = t;
+                I.hit++;
+                //I.rayDir = R.direction;
+            }
+        }
+
         void intersectExec(Ray R, inout Intersection I) {
             intersectSphere(R, sphere[0], I);
             intersectSphere(R, sphere[1], I);
+            intersectSphereLight(R, light, I);
             intersectFloor(R, floor, I);
         }
 
@@ -132,11 +147,16 @@
             sphere[1].radius = 1.0;
             sphere[1].position = vec3(3.0, 1.0, 0.0);
             sphere[1].color = vec3(0.0, 0.0, 1.0);
-            
+
             // 床を作成する
             floor.position = vec3(0.0, -1.0, 0.0);
             floor.normal = vec3(0.0, 1.0, 0.0);
             floor.color = vec3(1.0);
+
+            light.radius = 1.0;
+            light.position = vec3(0.0, 1.0, 0.0);
+            light.color = vec3(1.0, 0.0, 1.0);
+            light.intensity = 10.0;
 
             // 判定オブジェクトを準備
             Intersection its;
