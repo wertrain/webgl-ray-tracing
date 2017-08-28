@@ -39,13 +39,13 @@
             float d = -dot(P.position, P.normal);
             float v = dot(R.direction, P.normal);
             float t = -(dot(R.origin, P.normal) + d) / v;
-            if(t > 0.0 && t < I.distance) {
+            if (t > 0.0 && t < I.distance) {
                 I.hitPoint = R.origin + R.direction * t;
                 I.normal = P.normal;
                 float d = clamp(dot(I.normal, lightDirection), 0.1, 1.0);
                 float m = mod(I.hitPoint.x, 2.0);
                 float n = mod(I.hitPoint.z, 2.0);
-                if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
+                if ((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
                     d *= 0.5;
                 }
                 float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;

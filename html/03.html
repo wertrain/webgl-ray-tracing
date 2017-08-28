@@ -37,10 +37,10 @@
             float b = dot(a, R.direction);
             float c = dot(a, a) - (S.radius * S.radius);
             float d = b * b - c;
-            if(d > 0.0) {
+            if (d > 0.0) {
                 // 交差した座標までの距離を求める
                 float t = -b - sqrt(d);
-                if(t > 0.0) {
+                if (t > 0.0) {
                     i.hit = true;
                     // レイから交差した位置を計算する
                     i.hitPoint = R.origin + R.direction * t;

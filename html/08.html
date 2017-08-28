@@ -97,14 +97,14 @@
             // レイ方向と床法線の内積
             float v = dot(R.direction, F.normal);
             float t = -(dot(R.origin, F.normal) + d) / v;
-            if(t > EPS && t < I.distance) {
+            if (t > EPS && t < I.distance) {
                 I.hitPoint = R.origin + R.direction * t;
                 I.normal = F.normal;
                 float d = clamp(dot(LDR, I.normal), 0.1, 1.0);
                 // チェック模様を描く
                 float m = mod(I.hitPoint.x, 2.0);
                 float n = mod(I.hitPoint.z, 2.0);
-                if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
+                if ((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
                     d *= 0.5;
                 }
                 // 奥にあるものほど暗くしていく
@@ -158,19 +158,19 @@
             Ray q;
             intersectExec(ray, its);
             // 反射を反映する
-            if(its.hit > 0) {
+            if (its.hit > 0) {
                 // レイが反射した位置の色を反映する
                 // 一時領域に色を合成して保持
                 destColor = its.color;
                 tempColor *= its.color;
                 // 反射回数分ループする
-                for(int j = 1; j < MAX_REF; ++j) {
+                for (int j = 1; j < MAX_REF; ++j) {
                     q.origin = its.hitPoint + its.normal * EPS;
                     // 入射角と法線方向から反射角度を計算する
                     q.direction = reflect(its.rayDir, its.normal);
                     // 計算した反射角を使用して再トレース
                     intersectExec(q, its);
-                    if(its.hit > j) {
+                    if (its.hit > j) {
                         // レイが反射した位置の色を反映する
                         // 一時領域に色を合成して保持
                         destColor += tempColor * its.color;
