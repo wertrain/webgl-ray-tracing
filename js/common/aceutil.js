@@ -21,7 +21,7 @@
      *
      */
     AceUtil.prototype.create = function(editorId) {
-        var editor = ace.edit(editorId);
+        let editor = ace.edit(editorId);
         editor.$blockScrolling = Infinity;
         editor.setOptions({
             showInvisibles: true
