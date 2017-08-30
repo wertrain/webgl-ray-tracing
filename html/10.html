@@ -115,8 +115,8 @@
             if (d > 0.0 && t > EPS && t < I.distance) {
                 I.hitPoint = R.origin + R.direction;
                 I.normal = normalize(I.hitPoint - L.position);
-                d = clamp(dot(LDR * L.intensity, I.normal), 0.1, 1.0);
-                I.color = L.color * d;
+                d = clamp(dot(LDR, I.normal), 0.1, 1.0);
+                I.color = L.color * d * L.intensity;
                 I.distance = t;
                 I.hit++;
                 I.rayDir = R.direction;
