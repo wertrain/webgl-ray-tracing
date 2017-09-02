@@ -44,7 +44,7 @@
         const float EPS = 0.0001;       // 疑似イプシロン(本来の意味としては1.0+x!=1.0となる最小のx値)
         const int   MAX_REF = 1;        // 反射回数
 
-        Cube cube;
+        Cube cube[3];
         Floor floor;
 
         void intersectInit(inout Intersection I) {
@@ -54,43 +54,6 @@
             I.color    = vec3(0.0);
             I.distance = 1.0e+30;
             I.rayDir   = vec3(0.0);
-        }
-
-        vec3 culcNormal(Ray R, Cube C) {
-            vec3 bmin = C.position - vec3(C.width);
-            vec3 bmax = C.position + vec3(C.width);
-
-            float minX = R.directionSign.x > 0.0 ? bmax.x : bmin.x;
-            float minY = R.directionSign.y > 0.0 ? bmax.y : bmin.y;
-            float minZ = R.directionSign.z > 0.0 ? bmax.z : bmin.z;
-
-            // X
-            float tminX = (minX - R.origin.x) * R.directionInverse.x;
-
-            // Y
-            float tminY = (minY - R.origin.y) * R.directionInverse.y;
-
-            // Z
-            float tminZ = (minZ - R.origin.z) * R.directionInverse.z;
-
-            int axis = 0;
-            float tmin = tminX;
-            if (tmin < tminY) {
-                axis = 1;
-                tmin = tminY;
-            }
-            if (tmin < tminZ) {
-                axis = 2;
-                tmin = tminZ;
-            }
-            
-            float x = R.directionSign.x > 0.0 ? 1.0 : -1.0;
-            float y = R.directionSign.y > 0.0 ? 1.0 : -1.0;
-            float z = R.directionSign.z > 0.0 ? 1.0 : -1.0;
-            if (axis == 0) return vec3(x, 0, 0);
-            else if (axis == 1) return vec3(0, y, 0);
-            else if (axis == 2) return vec3(0, 0, z);
-            else return vec3(0.0);
         }
 
         void intersectCube(Ray R, Cube C, inout Intersection I) {
@@ -104,7 +67,7 @@
             float maxX = R.directionSign.x > 0.0 ? bmin.x : bmax.x;
             float maxY = R.directionSign.y > 0.0 ? bmin.y : bmax.y;
             float maxZ = R.directionSign.z > 0.0 ? bmin.z : bmax.z;
-
+            
             // X
             float tminX = (minX - R.origin.x) * R.directionInverse.x;
             float tmaxX = (maxX - R.origin.x) * R.directionInverse.x;
@@ -121,17 +84,11 @@
             float tmax = min(tmaxZ, min(tmaxY, tmaxX));
             
             if (tmin <= tmax) {
-                vec3 normal = culcNormal(R, C);
-                float d = clamp(dot(LDR, normal), 0.1, 1.0);
-                float v = dot(R.direction, normal);
-                float t = -(dot(R.origin, normal) + d) / v;
-                I.hitPoint = R.origin + R.direction * t;
-                I.normal = normal;
-                float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.01;
-                I.color = C.color * d * f;
                 I.hit++;
+                I.hitPoint = R.origin + R.direction * tmin;
                 I.rayDir = R.direction;
                 I.distance = tmin;
+                I.color = C.color;
             }
         }
 
@@ -148,7 +105,7 @@
                 // チェック模様を描く
                 float m = mod(I.hitPoint.x, 2.0);
                 float n = mod(I.hitPoint.z, 2.0);
-                if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
+                if ((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)) {
                     d *= 0.5;
                 }
                 // 奥にあるものほど暗くしていく
@@ -161,7 +118,9 @@
         }
 
         void intersectExec(Ray R, inout Intersection I) {
-            intersectCube(R, cube, I);
+            intersectCube(R, cube[0], I);
+            intersectCube(R, cube[1], I);
+            intersectCube(R, cube[2], I);
             intersectFloor(R, floor, I);
         }
 
@@ -171,7 +130,7 @@
 
             // レイを作成する
             Ray ray;
-            ray.origin = vec3(0.0, 3.5, 6.0);
+            ray.origin = vec3(0.0, 2.0, 6.0);
             // Z 値がマイナス方向 ＝ 奥側に向かうレイ
             ray.direction = normalize(vec3(p.x, p.y, -1.0));
             
@@ -183,9 +142,15 @@
             ray.directionSign.y = ray.direction.y < 0.0 ? 1.0 : 0.0;
             ray.directionSign.z = ray.direction.z < 0.0 ? 1.0 : 0.0;
             
-            cube.position = vec3(0.0, 2.0, 0.0);
-            cube.width = 1.0;
-            cube.color = vec3(1.0);
+            cube[0].position = vec3(0.0, 0.0, 0.0);
+            cube[0].width = 1.0;
+            cube[0].color = vec3(0, 0.3, 0.0);
+            cube[1].position = vec3(2.5, 1.0, 0.0);
+            cube[1].width = 1.0;
+            cube[1].color = vec3(0, 0, 0.3);
+            cube[2].position = vec3(-2.5, 1.0, 0.0);
+            cube[2].width = 1.0;
+            cube[2].color = vec3(0.3, 0, 0);
             
             // 床を作成する
             floor.position = vec3(0.0, -1.0, 0.0);
