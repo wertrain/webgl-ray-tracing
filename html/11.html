@@ -36,9 +36,8 @@
         };
 
         // レイと三角形の交差判定関数
-        Intersection intersectTriangle(Ray R, Triangle T) {
+        Intersection intersectTriangle(Ray R, Triangle T, inout Intersection i) {
             // 参考：https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
-            Intersection i;
             vec3 v0 = T.vertexs[0] + T.position;
             vec3 v1 = T.vertexs[1] + T.position;
             vec3 v2 = T.vertexs[2] + T.position;
@@ -78,16 +77,16 @@
             if (dot(N, C) < 0.0) {
                 return i; // P is on the right side
             }
-         
+
             // edge 2
             vec3 edge2 = v0 - v2; 
             vec3 vp2 = P - v2; 
             C = cross(edge2, vp2); 
             if (dot(N, C) < 0.0) {
                 return i; // P is on the right side;
-           }
+            }
 
-            //i.hitPoint = t;
+            i.hitPoint = P;
             i.color = T.color;
             i.hit = true;
             i.normal = N;
@@ -106,15 +105,30 @@
             ray.direction = normalize(vec3(p.x, p.y, 1.0));
 
             // 三角形を作成する
-            Triangle triangle;
-            triangle.position = vec3(0.0);
-            triangle.vertexs[0] = vec3(  3.0, -2.0, 0.0);
-            triangle.vertexs[1] = vec3( -3.0, -2.0, 0.0);
-            triangle.vertexs[2] = vec3(  0.0,  3.0, 0.0);
-            triangle.color = vec3(1.0, 0, 0);
+            Triangle triangle[3];
+            triangle[0].position = vec3(0.0);
+            triangle[0].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[0].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[0].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[0].color = vec3(1.0, 0, 0);
+            
+            triangle[1].position = vec3(2.5, 0.0, 0.0);
+            triangle[1].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[1].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[1].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[1].color = vec3(1.0, 0, 1.0);
+            
+            triangle[2].position = vec3(-2.5, 0.0, 0.0);
+            triangle[2].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[2].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[2].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[2].color = vec3(1.0, 1.0, 0);
 
             // 交差判定関数の呼び出し
-            Intersection i = intersectTriangle(ray, triangle);
+            Intersection i;
+            intersectTriangle(ray, triangle[0], i);
+            intersectTriangle(ray, triangle[1], i);
+            intersectTriangle(ray, triangle[2], i);
             gl_FragColor = vec4(i.color, 1.0);
         }
     </script>
