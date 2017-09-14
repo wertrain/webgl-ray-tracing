@@ -51,7 +51,7 @@
             float NdotRayDirection = dot(N, R.direction);
             if (abs(NdotRayDirection) < EPS)
                 return i;
-                
+            
             // compute d parameter using equation 2
             float d = dot(N, v0);
             
@@ -59,7 +59,7 @@
             float t = (dot(N, R.origin) + d) / NdotRayDirection;
             if (t < 0.0)
                 return i;
-                
+            
             vec3 P = R.origin + t * R.direction;
 
             // edge 0
