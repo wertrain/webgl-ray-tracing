@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL Ray Tracing - 12</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <script id="fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform float time;       // 経過時間
+        uniform vec2  resolution; // 画面サイズ
+
+        const float EPS = 0.0001;
+        
+        // レイの定義
+        struct Ray {
+            vec3 origin;    // 始点
+            vec3 direction; // 方向
+        };
+
+        // 三角形の定義
+        struct Triangle {
+            vec3 position;
+            vec3 vertexs[3];
+            vec3 color;
+        };
+
+        // 交差情報の定義
+        struct Intersection {
+            bool hit;      // 交差したかどうかのフラグ
+            vec3 hitPoint; // 交点の座標
+            vec3 normal;   // 交点位置の法線
+            vec3 color;    // 交点位置の色
+        };
+
+        // レイと三角形の交差判定関数
+        Intersection intersectTriangle(Ray R, Triangle T, inout Intersection i) {
+            // 参考：https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
+            vec3 v0 = T.vertexs[0] + T.position;
+            vec3 v1 = T.vertexs[1] + T.position;
+            vec3 v2 = T.vertexs[2] + T.position;
+            // compute plane's normal
+            vec3 v0v1 = v1 - v0;
+            vec3 v0v2 = v2 - v0;
+            // no need to normalize
+            vec3 N = cross(v0v1, v0v2); // N
+            float area2 = length(N);
+            
+            float NdotRayDirection = dot(N, R.direction);
+            if (abs(NdotRayDirection) < EPS)
+                return i;
+            
+            // compute d parameter using equation 2
+            float d = dot(N, v0);
+            
+            // compute t (equation 3)
+            float t = (dot(N, R.origin) + d) / NdotRayDirection;
+            if (t < 0.0)
+                return i;
+            
+            vec3 P = R.origin + t * R.direction;
+
+            // edge 0
+            vec3 edge0 = v1 - v0;
+            vec3 vp0 = P - v0;
+            vec3 C = cross(edge0, vp0);
+            if (dot(N, C) < 0.0) {
+                return i; // P is on the right side
+            }
+            
+            // edge 1
+            vec3 edge1 = v2 - v1;
+            vec3 vp1 = P - v1;
+            C = cross(edge1, vp1);
+            if (dot(N, C) < 0.0) {
+                return i; // P is on the right side
+            }
+
+            // edge 2
+            vec3 edge2 = v0 - v2;
+            vec3 vp2 = P - v2;
+            C = cross(edge2, vp2);
+            if (dot(N, C) < 0.0) {
+                return i; // P is on the right side;
+            }
+
+            i.hitPoint = P;
+            i.color = T.color;
+            i.hit = true;
+            i.normal = N;
+            return i;
+        }
+        
+        void main(void) {
+            // gl_FragCoord.xy は現在処理しようとしているピクセル座標
+            // スクリーンの中心を原点として X と Y のそれぞれが -1.0 〜 1.0 となるような座標系を計算
+            vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
+
+            // レイを作成する
+            Ray ray;
+            ray.origin = vec3(0.0, 0.0, 5.0);
+            // Z 値がマイナス方向 ＝ 奥側に向かうレイ
+            ray.direction = normalize(vec3(p.x, p.y, 1.0));
+
+            // 三角形を作成する
+            Triangle triangle[3];
+            triangle[0].position = vec3(0.0);
+            triangle[0].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[0].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[0].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[0].color = vec3(1.0, 0, 0);
+            
+            triangle[1].position = vec3(2.5, 0.0, 0.0);
+            triangle[1].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[1].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[1].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[1].color = vec3(1.0, 0, 1.0);
+            
+            triangle[2].position = vec3(-2.5, 0.0, 0.0);
+            triangle[2].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[2].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[2].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[2].color = vec3(1.0, 1.0, 0);
+
+            // 交差判定関数の呼び出し
+            Intersection i;
+            intersectTriangle(ray, triangle[0], i);
+            intersectTriangle(ray, triangle[1], i);
+            intersectTriangle(ray, triangle[2], i);
+            gl_FragColor = vec4(i.color, 1.0);
+        }
+    </script>
+    <div class="container">
+      <div class="text-center">
+        <canvas id="canvas"></canvas>
+      </div>
+      <pre id="editor" style="height: 400px"></pre>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="../js/common/common.js"></script>
+    <script src="../js/common/glutil.js"></script>
+    <script src="../js/common/aceutil.js"></script>
+    <script>
+        RayTracing.Common.initialize();
+    </script>
+  </body>
+</html>
