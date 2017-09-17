@@ -34,13 +34,93 @@
             vec3 normal;   // 交点位置の法線
             vec3 color;    // 交点位置の色
         };
+        
+        // 平行移動
+        void translate(inout Triangle T, vec3 pos) {
+            mat4 mtx = mat4 (
+                1.0, 0.0, 0.0, pos.x,
+                0.0, 1.0, 0.0, pos.y,
+                0.0, 0.0, 1.0, pos.z,
+                0.0, 0.0, 0.0, 1.0
+            );
+            vec4 v0 = vec4(T.vertexs[0], 1.0) * mtx;
+            vec4 v1 = vec4(T.vertexs[1], 1.0) * mtx;
+            vec4 v2 = vec4(T.vertexs[2], 1.0) * mtx;
+            T.vertexs[0] = v0.xyz;
+            T.vertexs[1] = v1.xyz;
+            T.vertexs[2] = v2.xyz;
+        }
+
+        // 拡大・縮小
+        void scaling(inout Triangle T, vec3 scale) {
+            mat4 mtx = mat4 (
+                scale.x, 0.0,     0.0,     0.0,
+                0.0,     scale.y, 0.0,     0.0,
+                0.0,     0.0,     scale.z, 0.0,
+                0.0,     0.0,     0.0,     1.0
+            );
+            vec4 v0 = vec4(T.vertexs[0], 1.0) * mtx;
+            vec4 v1 = vec4(T.vertexs[1], 1.0) * mtx;
+            vec4 v2 = vec4(T.vertexs[2], 1.0) * mtx;
+            T.vertexs[0] = v0.xyz;
+            T.vertexs[1] = v1.xyz;
+            T.vertexs[2] = v2.xyz;
+        }
+        
+        // 回転 X
+        void rotationX(inout Triangle T, float radian) {
+            mat4 mtx = mat4 (
+                1.0,          0.0,          0.0,     0.0,
+                0.0,  cos(radian), -sin(radian),     0.0,
+                0.0,  sin(radian),  cos(radian),     0.0,
+                0.0,          0.0,          0.0,     1.0
+            );
+            vec4 v0 = vec4(T.vertexs[0], 1.0) * mtx;
+            vec4 v1 = vec4(T.vertexs[1], 1.0) * mtx;
+            vec4 v2 = vec4(T.vertexs[2], 1.0) * mtx;
+            T.vertexs[0] = v0.xyz;
+            T.vertexs[1] = v1.xyz;
+            T.vertexs[2] = v2.xyz;
+        }
+
+        // 回転 Y
+        void rotationY(inout Triangle T, float radian) {
+            mat4 mtx = mat4 (
+                cos(radian),  0.0, sin(radian), 0.0,
+                        0.0,  1.0,         0.0, 0.0,
+               -sin(radian),  0.0, cos(radian), 0.0,
+                        0.0,  0.0,         0.0, 1.0
+            );
+            vec4 v0 = vec4(T.vertexs[0], 1.0) * mtx;
+            vec4 v1 = vec4(T.vertexs[1], 1.0) * mtx;
+            vec4 v2 = vec4(T.vertexs[2], 1.0) * mtx;
+            T.vertexs[0] = v0.xyz;
+            T.vertexs[1] = v1.xyz;
+            T.vertexs[2] = v2.xyz;
+        }
+
+        // 回転 Z
+        void rotationZ(inout Triangle T, float radian) {
+            mat4 mtx = mat4 (
+                cos(radian), -sin(radian),  0.0, 0.0,
+                sin(radian),  cos(radian),  0.0, 0.0,
+                0.0,          0.0,          1.0, 0.0,
+                0.0,          0.0,          0.0, 1.0
+            );
+            vec4 v0 = vec4(T.vertexs[0], 1.0) * mtx;
+            vec4 v1 = vec4(T.vertexs[1], 1.0) * mtx;
+            vec4 v2 = vec4(T.vertexs[2], 1.0) * mtx;
+            T.vertexs[0] = v0.xyz;
+            T.vertexs[1] = v1.xyz;
+            T.vertexs[2] = v2.xyz;
+        }
 
         // レイと三角形の交差判定関数
         Intersection intersectTriangle(Ray R, Triangle T, inout Intersection i) {
             // 参考：https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
-            vec3 v0 = T.vertexs[0] + T.position;
-            vec3 v1 = T.vertexs[1] + T.position;
-            vec3 v2 = T.vertexs[2] + T.position;
+            vec3 v0 = T.vertexs[0];
+            vec3 v1 = T.vertexs[1];
+            vec3 v2 = T.vertexs[2];
             // compute plane's normal
             vec3 v0v1 = v1 - v0;
             vec3 v0v2 = v2 - v0;
@@ -93,42 +173,60 @@
             return i;
         }
         
+        Ray ray;
+        Triangle triangle[5];
+        
         void main(void) {
             // gl_FragCoord.xy は現在処理しようとしているピクセル座標
             // スクリーンの中心を原点として X と Y のそれぞれが -1.0 〜 1.0 となるような座標系を計算
             vec2 p = (gl_FragCoord.xy * 2.0 - resolution) / min(resolution.x, resolution.y);
 
             // レイを作成する
-            Ray ray;
             ray.origin = vec3(0.0, 0.0, 5.0);
             // Z 値がマイナス方向 ＝ 奥側に向かうレイ
             ray.direction = normalize(vec3(p.x, p.y, 1.0));
 
             // 三角形を作成する
-            Triangle triangle[3];
-            triangle[0].position = vec3(0.0);
-            triangle[0].vertexs[0] = vec3(  1.0, -1.0, 0.0);
-            triangle[0].vertexs[1] = vec3( -1.0, -1.0, 0.0);
-            triangle[0].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[0].vertexs[0] = vec3(  1.0, -1.5, 0.0);
+            triangle[0].vertexs[1] = vec3( -1.0, -1.5, 0.0);
+            triangle[0].vertexs[2] = vec3(  0.0,  0.0, 0.0);
             triangle[0].color = vec3(1.0, 0, 0);
+            rotationZ(triangle[0], time);
             
-            triangle[1].position = vec3(2.5, 0.0, 0.0);
             triangle[1].vertexs[0] = vec3(  1.0, -1.0, 0.0);
             triangle[1].vertexs[1] = vec3( -1.0, -1.0, 0.0);
             triangle[1].vertexs[2] = vec3(  0.0,  0.5, 0.0);
             triangle[1].color = vec3(1.0, 0, 1.0);
+            translate(triangle[1], vec3(2.5, 0.0, 0.0));
+            scaling(triangle[1], vec3(1.0 - cos(time)));
             
-            triangle[2].position = vec3(-2.5, 0.0, 0.0);
             triangle[2].vertexs[0] = vec3(  1.0, -1.0, 0.0);
             triangle[2].vertexs[1] = vec3( -1.0, -1.0, 0.0);
             triangle[2].vertexs[2] = vec3(  0.0,  0.5, 0.0);
             triangle[2].color = vec3(1.0, 1.0, 0);
+            translate(triangle[2], vec3(-2.5, sin(time), 0.0));
 
+            triangle[3].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[3].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[3].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[3].color = vec3(0.0, 1.0, 1.0);
+            rotationY(triangle[3], time);
+            translate(triangle[3], vec3(0.0, -2.5, 10.0));
+            
+            triangle[4].vertexs[0] = vec3(  1.0, -1.0, 0.0);
+            triangle[4].vertexs[1] = vec3( -1.0, -1.0, 0.0);
+            triangle[4].vertexs[2] = vec3(  0.0,  0.5, 0.0);
+            triangle[4].color = vec3(0.0, 0.5, 1.0);
+            rotationX(triangle[4], time);
+            translate(triangle[4], vec3(0.0, 3.5, 10.0));
+            
             // 交差判定関数の呼び出し
             Intersection i;
             intersectTriangle(ray, triangle[0], i);
             intersectTriangle(ray, triangle[1], i);
             intersectTriangle(ray, triangle[2], i);
+            intersectTriangle(ray, triangle[3], i);
+            intersectTriangle(ray, triangle[4], i);
             gl_FragColor = vec4(i.color, 1.0);
         }
     </script>
